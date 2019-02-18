@@ -1,6 +1,10 @@
-const url = `http://localhost:9001`;
+const url = `https://chat-app-server-workshop.herokuapp.com`;
 const id = "WORKSHOP";
 
+/**
+ * Async method that gets and returns an auth code from the server.
+ * Keeps trying again and again until it makes a successful request.
+ */
 async function getAuthCode(){
     while (true) {
         try {
@@ -12,20 +16,32 @@ async function getAuthCode(){
     }
 }
 
+/**
+ * Gets messages from server and calls render function.
+ */
 async function refreshMessages(){
     while (true) {
         try {
             let code = await getAuthCode();
             let { messages } = await $.get(`${url}/getMessages`,{code});
-            let container = document.getElementById("MessageContainer");
-            container.innerHTML = messages.map(message=>`<div>${message.owner.name} : ${message.text}</div>`).join('');
-            return;
+            return renderMessages(messages);
         } catch (error) {
             console.error(error);
         }
     }
 };
 
+/**
+ * Draws messages in browser with HTML
+ */
+function renderMessages(messages){
+    let container = document.getElementById("MessageContainer");
+    container.innerHTML = messages.map(message=>`<div>${message.owner.name} : ${message.text}</div>`).join('');
+}
+
+/**
+ * Gets the value of several inputs, then uploads a message to the server.
+ */
 async function postMessage(){
     event.preventDefault();
     let textInput = document.getElementById('MessageInput');
@@ -39,8 +55,8 @@ async function postMessage(){
         try {
             let code = await getAuthCode();
             await $.get(`${url}/postMessage`,{code,text,name:username});
-            textInput.value = "";
             await refreshMessages();
+            textInput.value = "";
             return textInput.disabled = false;
         } catch (error) {
             console.log(error);
